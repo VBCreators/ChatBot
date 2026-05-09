@@ -1,32 +1,32 @@
-import os
-
-from dotenv import load_dotenv
-from langchain_google_genai import ChatGoogleGenerativeAI
-
-
-def chatbot_response(user_input):
-
-    # 1. Load the variables from the .env file into the system environment
-    load_dotenv()
-
-    # 2. Access the variable (LangChain often looks for GOOGLE_API_KEY automatically)
-    api_key = os.getenv("GOOGLE_API_KEY")
-
-    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=api_key)
-
-    response = llm.invoke(user_input)
-    return response.content
+# from brain.engine import chatbot_response
+import app.streaming as streaming
+import brain.engine as engine
+from langchain_core.messages import HumanMessage, SystemMessage
 
 
 def main():
-    print("Chatbot: Hello! Type 'exit' to quit.")
+
+    # Initialize the engine components
+    llm = engine.get_llm()
+    system_prompt = engine.get_ai_personality()
+
+    print("Zina: Hi! I am Zina. Your AI Assistant. How can I help with you today?")
+    print("Zina: Type 'exit' to quit.")
+
     while True:
-        user_input = input("You: ")
+        user_input = input("\nYou: ")
         if user_input.lower() in ["exit", "quit", "bye"]:
-            print("Chatbot: Goodbye!")
+            print("Zina: Goodbye!")
             break
-        response = chatbot_response(user_input)
-        print(f"Chatbot: {response}")
+
+        # Construct the context for the LLM
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_input),
+        ]
+
+        # Call the modular streaming function
+        streaming.stream_response(llm, messages)
 
 
 if __name__ == "__main__":
