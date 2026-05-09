@@ -1,20 +1,21 @@
-import spacy
+import os
+
+from dotenv import load_dotenv
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 
 def chatbot_response(user_input):
-    nlp = spacy.load("en_core_web_md")
-    doc = nlp(user_input.lower())
 
-    # Check for 'weather' as a concept, not just a string
-    for token in doc:
-        if token.lemma_ == "weather":
-            return "I don't have a window, but it feels like 22°C in the cloud."
+    # 1. Load the variables from the .env file into the system environment
+    load_dotenv()
 
-    # Check for greeting entities or patterns
-    if any(token.text in ["hi", "hello", "hey"] for token in doc):
-        return "Greetings, human!"
+    # 2. Access the variable (LangChain often looks for GOOGLE_API_KEY automatically)
+    api_key = os.getenv("GOOGLE_API_KEY")
 
-    return "I'm still learning. can you ask about weather instead?"
+    llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=api_key)
+
+    response = llm.invoke(user_input)
+    return response.content
 
 
 def main():
