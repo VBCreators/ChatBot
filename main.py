@@ -2,6 +2,7 @@
 import app.streaming as streaming
 import brain.engine as engine
 from langchain_core.messages import HumanMessage, SystemMessage
+from config import BOT_NAME
 
 
 def main():
@@ -10,13 +11,15 @@ def main():
     llm = engine.get_llm()
     system_prompt = engine.get_ai_personality()
 
-    print("Zina: Hi! I am Zina. Your AI Assistant. How can I help with you today?")
-    print("Zina: Type 'exit' to quit.")
+    print(
+        f"{BOT_NAME}: Hi! I am {BOT_NAME}, your AI Assistant. How can I help with you today?"
+    )
+    print(f"{BOT_NAME}: Type 'exit' to quit.")
 
     while True:
         user_input = input("\nYou: ")
         if user_input.lower() in ["exit", "quit", "bye"]:
-            print("Zina: Goodbye!")
+            print(f"{BOT_NAME}: Goodbye!")
             break
 
         # Construct the context for the LLM
