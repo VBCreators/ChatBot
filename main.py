@@ -22,6 +22,9 @@ def main():
             print(f"{BOT_NAME}: Goodbye!")
             break
 
+        # Adding a reminder for response length
+        user_input = user_input + " Please keep the response under 300 words."
+
         # Construct the context for the LLM
         messages = [
             SystemMessage(content=system_prompt),
