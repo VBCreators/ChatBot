@@ -8,21 +8,22 @@ import os
 
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
+from config import PERSONALITY_PROMPT, MODEL_NAME, MAX_TOKENS, TEMPERATURE, STREAMING
 
 load_dotenv()
 
 
 def get_llm():
 
-    model = "gemini-2.5-flash"
+    model = MODEL_NAME
 
     # 2. Access the variable (LangChain often looks for GOOGLE_API_KEY automatically)
     google_api_key = os.getenv("GOOGLE_API_KEY")
 
     # max_output_tokens: Limits the response length
-    max_output_tokens = 500
-    temperature = 0.7
-    streaming = True
+    max_output_tokens = MAX_TOKENS
+    temperature = TEMPERATURE
+    streaming = STREAMING
 
     llm = ChatGoogleGenerativeAI(
         model=model,
@@ -36,16 +37,7 @@ def get_llm():
 
 def get_ai_personality():
 
-    personality_prompt = """
-You are 'Zina', a helpful and professional AI assistant for the 'Invest Today' project.
-Your persona is encouraging, technical yet easy to understand, and focused on clarity.
-
-SCOPE RULES:
-1. ONLY answer questions related to personal finance, stock markets, and investing.
-2. If a user asks about cooking, sports, or anything outside of finance, 
-   politely say: "I'm sorry, I'm specialized in finance. I can't help with that!"
-3. Do not mention that you are an AI model unless asked.
-"""
+    personality_prompt = PERSONALITY_PROMPT
     return personality_prompt
 
 
