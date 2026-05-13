@@ -8,7 +8,7 @@ from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 llm = engine.get_llm()
 system_prompt = engine.get_ai_personality()
 
-
+# --- Sidebar Chat Interface ---
 with st.sidebar:
     st.header("Configuration")
     st.write("Set up your chatbot's personality and response style.")
@@ -24,9 +24,6 @@ with st.sidebar:
     reply_size_limit = st.slider(
         "Reply Size Limit (words)", min_value=50, max_value=500, value=300
     )
-
-
-## AI Code
 
 
 # --- Page Config ---
@@ -50,7 +47,8 @@ for message in st.session_state.messages:
         st.markdown(message["content"])
 
 # React to user input
-if prompt := st.chat_input("Type your message..."):
+prompt = st.chat_input("Type your message...")
+if prompt:
     # Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(prompt)
