@@ -1,8 +1,9 @@
 import streamlit as st
-import time
 import brain.engine as engine
 from config import BOT_NAME
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+from services.gui_streaming import stream_response_gui
+
 
 # Initialize the engine components
 llm = engine.get_llm()
@@ -18,7 +19,7 @@ with st.sidebar:
         "Choose a Model", ("gpt-4o", "gpt-3.5-turbo", "Llama-3-Local")
     )
 
-    bot_name = st.text_input("Bot Name", value="Zina")
+    bot_name = st.text_input("Bot Name", value=BOT_NAME)
     company_name = st.text_input("Company Name", value="VB Creators")
     scope = st.text_input("Scope (Domain)", value="Personal Finance")
     reply_size_limit = st.slider(
@@ -61,40 +62,18 @@ if prompt:
     langchain_messages = [SystemMessage(content=system_prompt)]
     for msg in st.session_state.messages:
         if msg["role"] == "user":
-            langchain_messages.append(HumanMessage(content=msg["content"]))
+            role_class = HumanMessage
         else:
-            langchain_messages.append(AIMessage(content=msg["content"]))
+            role_class = AIMessage
+        langchain_messages.append(role_class(content=msg["content"]))
 
-    # Display assistant response with REAL streaming
+    # Assistant response block
     with st.chat_message("assistant"):
         message_placeholder = st.empty()
-        full_response = ""
 
-        # Using llm.stream to get real-time chunks from Google Generative AI
-        for chunk in llm.stream(langchain_messages):
-            full_response += chunk.content
-            # Add a cursor to simulate typing
-            message_placeholder.markdown(full_response + "▌")
+        # CALL THE MODULAR STREAMING FUNCTION
+        full_response = stream_response_gui(
+            llm, langchain_messages, message_placeholder
+        )
 
-        message_placeholder.markdown(full_response)
-
-    # # Display assistant response in chat message container
-    # with st.chat_message("assistant"):
-    #     message_placeholder = st.empty()
-    #     full_response = ""
-
-    #     # --- Logic for Bot Response ---
-    #     # (Replace this block with your actual LLM API call)
-    #     assistant_response = f"You are using {model_option}. You said: {prompt}"
-
-    #     # Simulate a streaming response
-    #     for chunk in assistant_response.split():
-    #         full_response += chunk + " "
-    #         time.sleep(0.05)
-    #         # Add a blinking cursor to simulate typing
-    #         message_placeholder.markdown(full_response + "▌")
-
-    #     message_placeholder.markdown(full_response)
-
-    # Add assistant response to chat history
     st.session_state.messages.append({"role": "assistant", "content": full_response})
