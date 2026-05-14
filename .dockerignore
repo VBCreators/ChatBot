@@ -1,0 +1,25 @@
+# Ignore python virtual environments
+venv/
+.venv/
+env/
+
+# Ignore python cache files
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore IDE configs and workspaces
+.vscode/
+*.code-workspace
+.idea/
+
+# Ignore Git files
+.git
+.gitignore
+
+# Ignore .env files
+.env
+
+#Ignore documentation files
+README.md
