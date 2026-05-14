@@ -23,3 +23,8 @@ env/
 
 #Ignore documentation files
 README.md
+
+
+# Ignore old testing files
+main.py
+straming.py

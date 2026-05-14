@@ -1,8 +1,11 @@
+# External libs
 import streamlit as st
-import brain.engine as engine
-from config import BOT_NAME
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+
+# Internal imports
+from config import BOT_NAME
 from services.gui_streaming import stream_response_gui
+import brain.engine as engine
 
 
 # Initialize the engine components

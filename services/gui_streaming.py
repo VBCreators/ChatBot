@@ -15,6 +15,7 @@
 # This allows the main thread to run a smooth UI animation loop until the first word is ready!
 
 
+# Default Python package Imports
 import queue
 import threading
 import time
