@@ -4,7 +4,7 @@
 
 
 
-# Folder Structure
+# Proposed Folder Structure
 
 /my-ai-saas
 │

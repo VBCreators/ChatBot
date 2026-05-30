@@ -5,15 +5,15 @@
 # External libs
 from langchain_google_genai import ChatGoogleGenerativeAI
 
-# Default Python package Imports
-import os
-
 # Internal imports
-from dotenv import load_dotenv
-from config import PERSONALITY_PROMPT, MODEL_NAME, MAX_TOKENS, TEMPERATURE, STREAMING
-
-
-load_dotenv()
+from config import (
+    PERSONALITY_PROMPT,
+    MODEL_NAME,
+    MAX_TOKENS,
+    TEMPERATURE,
+    STREAMING,
+    GOOGLE_API_KEY,
+)
 
 
 def get_llm():
@@ -21,7 +21,7 @@ def get_llm():
     model = MODEL_NAME
 
     # 2. Access the variable (LangChain often looks for GOOGLE_API_KEY automatically)
-    google_api_key = os.getenv("GOOGLE_API_KEY")
+    google_api_key = GOOGLE_API_KEY
 
     # max_output_tokens: Limits the response length
     max_output_tokens = MAX_TOKENS

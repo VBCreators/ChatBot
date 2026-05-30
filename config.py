@@ -1,6 +1,15 @@
-# The central variable for your bot's identity
-# This file serves as the single source of truth for all your bot's configurations, including its name, personality traits, and response style. By centralizing these settings, you can easily maintain consistency across your application and make updates without having to search through multiple files.
+# config.py
+from dotenv import load_dotenv
+import os
 
+# Load environment variables from .env
+load_dotenv()
+
+# Database
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+# Google API key
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 # Model and API settings
 MODEL_NAME = "gemini-2.5-flash"
