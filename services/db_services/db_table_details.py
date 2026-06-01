@@ -1,0 +1,42 @@
+from datetime import datetime
+from typing import List
+from sqlalchemy import String, Text, ForeignKey, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from services.db_services.db_session import Base
+
+
+class ChatSession(Base):
+    __tablename__ = "chat_sessions"
+
+    # func.now() executes on the database server.
+    # server_default sets it at the schema level.
+
+    session_id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    title: Mapped[str] = mapped_column(String(127), default="New Chat")
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        server_default=func.now(), onupdate=func.now()
+    )
+
+    # server_default= (which generates DEFAULT CURRENT_TIMESTAMP in your actual SQL DDL)
+    messages: Mapped[List["ChatMessage"]] = relationship(
+        back_populates="Session",
+        cascade="all, delete-orphan",
+        order_by="ChatMessage.created_at",
+    )
+
+
+class ChatMessage(Base):
+    # Represents one message in a conversation.
+    __tablename__ = "chat_messages"
+
+    message_id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("chat_sessions.session_id", ondelete="CASCADE")
+    )
+    role: Mapped[str] = mapped_column(String(10))  # 'user' or 'assistant'
+    content: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
+    # Back reference to the parent conversation
+    session: Mapped["ChatSession"] = relationship(back_populates="messages")
