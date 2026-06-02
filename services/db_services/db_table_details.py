@@ -20,7 +20,7 @@ class ChatSession(Base):
 
     # server_default= (which generates DEFAULT CURRENT_TIMESTAMP in your actual SQL DDL)
     messages: Mapped[List["ChatMessage"]] = relationship(
-        back_populates="Session",
+        back_populates="session",
         cascade="all, delete-orphan",
         order_by="ChatMessage.created_at",
     )
