@@ -130,4 +130,5 @@ def stream_response_gui(llm, messages, placeholder):
 
     # Final render without the cursor element
     placeholder.markdown(full_response)
+
     return full_response
