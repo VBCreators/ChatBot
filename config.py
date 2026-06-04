@@ -8,6 +8,9 @@ load_dotenv()
 # Database
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+# App Title
+APP_TITLE = "VB_Bot"
+
 # Google API key
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 

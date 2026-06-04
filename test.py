@@ -12,8 +12,13 @@ with col1:
     if st.button("Add 1"):
         st.session_state.count += 1
 
+if st.button("Reset"):
+    st.rerun()
+
 with col2:
     if st.button("Minus 1"):
         st.session_state.count -= 1
 
+
+st.divider()
 st.write("Count:", st.session_state.count)

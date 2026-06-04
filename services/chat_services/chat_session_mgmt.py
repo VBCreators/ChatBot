@@ -22,7 +22,7 @@ def load_sessions_into_state(db: Session):
 def start_new_chat(db: Session):
     # Create a fresh chat and switch UI to it.
     new_session = create_new_session(db, title="New Chat")
-    st.session_state.current_session_id = new_session.id
+    st.session_state.current_session_id = new_session.session_id
     st.session_state.messages = []
     return new_session
 
@@ -44,7 +44,7 @@ def load_chat_into_state(db: Session, session_id: int):
         _clear_current_chat()
         return
 
-    st.session_state.current_session_id = session_obj.id
+    st.session_state.current_session_id = session_obj.session_id
     st.session_state.messages = [
         {"role": msg.role, "content": msg.content} for msg in session_obj.messages
     ]
