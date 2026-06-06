@@ -217,4 +217,5 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# Testing Files
+# AI Generated Files
+/rag_course
