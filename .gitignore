@@ -219,3 +219,6 @@ __marimo__/
 
 # AI Generated Files
 /rag_course
+/data/raw
+/data/faiss_index
+/data/evaluation

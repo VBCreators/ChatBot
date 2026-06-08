@@ -104,8 +104,6 @@ def build_rag_chain(vectorestore: FAISS):
         ("human", "{question}"),
     ])
 
-    # print(f"\n\nthe prompt is : {prompt}")
-
     rag_chain = (
         RunnablePassthrough.assign(
             context=(lambda x: x["question"]) | retriever | format_docs,
@@ -115,7 +113,6 @@ def build_rag_chain(vectorestore: FAISS):
         | StrOutputParser()
     )
 
-    # print(f"\n\n\nThe rag_chain/context value is : {rag_chain}")
     return rag_chain
 
 
