@@ -28,3 +28,9 @@ README.md
 # Ignore old testing files
 main.py
 straming.py
+
+# Ignore Folders
+/courses
+/data/raw
+/data/faiss_index
+/data/evaluation
