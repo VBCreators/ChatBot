@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List
-from sqlalchemy import String, Text, ForeignKey, func
+from sqlalchemy import String, Text, ForeignKey, func, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from services.db_services.db_session import Base
 
@@ -105,3 +105,18 @@ class DocumentChunk(Base):
     __table_args__ = (
         UniqueConstraint("source_id", "chunk_index", name="uq_source_chunk_index"),
     )
+
+
+
+# User Login Details
+class Users (Base):
+    __tablename__ = "users"
+
+    user_id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    user_name: Mapped[str] = mapped_column(String(63), unique=True, nullable=False, index=True)
+    user_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    user_email_id: Mapped[str] = mapped_column(String(63), unique=True, nullable=False, index=True)
+    user_is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    user_last_login: Mapped[datetime] = mapped_column(server_default=func.now())
+    user_created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+
