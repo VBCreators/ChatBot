@@ -1,16 +1,22 @@
 from datetime import datetime
 from typing import List
+from typing import Any, Dict, Optional
+
+# import SQL Alchemy
 from sqlalchemy import String, Text, ForeignKey, func, Boolean
+from sqlalchemy import BigInteger, DateTime, Integer, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+# import DB Base
 from services.db_services.db_session import Base
 
-
-from typing import Any, Dict, Optional
-from sqlalchemy import BigInteger, DateTime, Integer, UniqueConstraint
-
+# PG vector import
 from pgvector.sqlalchemy import Vector
 from sqlalchemy.dialects.postgresql import JSONB
 
+# ==========================================================================================
+# User Chat Tables 
+# ==========================================================================================
 
 class ChatSession(Base):
     __tablename__ = "chat_sessions"
@@ -44,6 +50,10 @@ class ChatMessage(Base):
 
     # Back reference to the parent conversation
     session: Mapped["ChatSession"] = relationship(back_populates="messages")
+
+# ==========================================================================================
+# Vertor Store tables via PG vector 
+# ==========================================================================================
 
 
 class DocumentSource(Base):
@@ -106,9 +116,10 @@ class DocumentChunk(Base):
         UniqueConstraint("source_id", "chunk_index", name="uq_source_chunk_index"),
     )
 
-
-
+# ==========================================================================================
 # User Login Details
+# ==========================================================================================
+
 class Users (Base):
     __tablename__ = "users"
 
@@ -120,3 +131,6 @@ class Users (Base):
     user_last_login: Mapped[datetime] = mapped_column(server_default=func.now())
     user_created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
+    def __repr__(self):
+        return f"<user name is {self.user_name !r} and user id is {self.user_id}>"
+    
