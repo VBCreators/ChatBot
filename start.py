@@ -3,7 +3,7 @@ import streamlit as st
 # from services.db_services.db_crud import get_all_sessions
 
 from ui.user_login_ui import login_screen
-from ui.chat_page import chat_ui
+from ui.chat_page import chat_page_ui
 
 # session = get_db_session()
 # value = get_all_sessions(session)
@@ -25,7 +25,7 @@ def main():
             st.rerun()
                           
     else  :
-        chat_ui()
+        chat_page_ui()
      
 
 
