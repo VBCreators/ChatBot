@@ -4,6 +4,8 @@ import streamlit as st
 
 from ui.user_login_ui import login_screen
 from ui.chat_page import chat_page_ui
+from ui.user_signup_ui import signup_screen
+
 
 # session = get_db_session()
 # value = get_all_sessions(session)
@@ -14,19 +16,30 @@ from ui.chat_page import chat_page_ui
 
 def main():
 
-    if "user_is_active" not in st.session_state:
-        st.session_state.user_is_active = False
+    if "page" not in st.session_state:
+        st.session_state.page = "user_login_page"
 
-    if not st.session_state.user_is_active :
-        login_result = login_screen()
+    if st.session_state.page == "user_login_page" :
+
+        if "user_is_active" not in st.session_state:
+            st.session_state.user_is_active = False
+
+        if not st.session_state.user_is_active :
+            login_result = login_screen()
+            
+            if login_result :
+                st.session_state.user_is_active = True
+                st.rerun()
+                            
+        else  :
+            chat_page_ui()
+
+    elif st.session_state.page == "user_signup_page" :
+        signup_screen()
+
         
-        if login_result :
-            st.session_state.user_is_active = True
-            st.rerun()
-                          
-    else  :
-        chat_page_ui()
-     
+
+        
 
 
 
