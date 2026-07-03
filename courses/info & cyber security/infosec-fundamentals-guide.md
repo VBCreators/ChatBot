@@ -16,7 +16,7 @@ This guide walks through the core concepts of InfoSec/Cybersecurity step by step
 
 ### 2. The CIA Triad (The Core Foundation of Everything)
 
-This is the single most important concept in security. Almost every other concept exists to support one of these three pillars. 
+This is the single most important concept in security. Almost every other concept exists to support one of these three pillars. ``
 
 | Pillar | What it means | Problem it solves | Example |
 |---|---|---|---|
