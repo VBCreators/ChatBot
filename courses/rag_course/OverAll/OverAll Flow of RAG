@@ -1,0 +1,75 @@
+PHASE 1: Document Embedding/storing phase:
+
+loader load documents using Docling and updates metadata
+
+also stores original in object storage (aws s3 or MinIO)
+
+
+
+PHASE 2: Split the Document into chunks:
+
+use the following 4 techniques/steps:
+1. Structural  chunk 
+2. Token Guard (3 to 4 x of max token size, overlap size)
+3. Semantic Chunk ( for topic change use Tokenizer like Tiktoken and embed using all-MiniLM-L6v2)
+4. RCTS (define the max token size, overlap size)
+5. Add metadata at every steps
+
+metadata Enrichment for each Chunk by passing through a LLM(gtp-oss, or gemma or MiniLM)
+
+store chunks and its metadata in Document Store(Mongo DB) and generate chuck id against each chunk also add object store reference link for each chunk
+
+Also store the chunk text(word) details in an inverted file index like Elastic Search or open search
+
+
+
+PHASE 3:Embedding the chunks:
+
+1. Define tokenization model(SentencePiece)
+2. Define Embedding model(BGE M3) 
+with parameters(attention mask, mean pooling, Normalization)
+
+create a hash of each document chunk and check if this document hash already exist in the redis cache.
+
+if there is a cache miss then Embed the chunks and also store it in the redis cache along with the chunk hash
+
+if there is a cache hit, then directly take the Embeded chunk from the redis cache
+
+
+
+PHASE 4: Vector database:
+1. store the Embedding in a vector DB(Qdrant if medium to large and Milvus if very large)
+2. store chunk id against each embedding
+
+
+
+
+
+
+
+
+
+PHASE 2: Retrival
+
+read the user input question and chat history
+
+as an optional component, compress the chat history if too long
+
+convert user query into a standalone query
+
+hash the stand alone query and check if the query and response already exist the Redis Cache
+
+if Redis cache hit, then directly give the cached answer to the user
+
+if Redisc cache miss, then proceed to next step
+
+embed the standalone query
+
+
+
+
+
+
+
+
+i
