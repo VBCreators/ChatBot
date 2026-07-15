@@ -5,6 +5,10 @@ from config import DATABASE_URL
 # Base class for all ORM models
 Base = declarative_base()
 
+# check if DB url is set or not
+if not DATABASE_URL:
+    print("DB URL is not set, please check .env")
+
 # Create SQLAlchemy engine
 engine = create_engine(
     DATABASE_URL,

@@ -1,26 +1,16 @@
-# Documentation for the `stream_response_gui` function:
-
-# stream_worker() is a background thread that calls llm.stream() and puts each chunk into a thread-safe queue.
-#
-#
-#  To add a dynamic, changing dots animation along with a creative rotation of phrases (like Claude and Gemini)
-# while waiting for your AI to start responding,
-
-# we need to solve a common streaming challenge:
-# LangChain's llm.stream() blocks execution until the first word arrives.
-#
-# To animate while waiting, we can offload the LLM streaming to a background thread
-# and use a queue to send words back to Streamlit's main thread.
-#
-# This allows the main thread to run a smooth UI animation loop until the first word is ready!
-
-
-# Default Python package Imports
 import queue
 import threading
 import time
 import random
 
+def stream_worker(llm, messages, chunk_queue):
+    try:
+        for chunk in llm.stream(messages):
+            chunk_queue.put(chunk)
+    except Exception as e:
+        chunk_queue.put(e)
+    finally:
+        chunk_queue.put(None)
 
 def stream_response_gui(llm, messages, placeholder):
 
@@ -31,46 +21,21 @@ def stream_response_gui(llm, messages, placeholder):
     chunk_queue = queue.Queue()
 
     # Background worker function to fetch the stream
-    def stream_worker():
-        try:
-            for chunk in llm.stream(messages):
-                chunk_queue.put(chunk)
-        except Exception as e:
-            chunk_queue.put(e)
-        finally:
-            chunk_queue.put(None)  # Sentinel value indicating the stream is finished
+    # def stream_worker():
+    #     try:
+    #         for chunk in llm.stream(messages):
+    #             chunk_queue.put(chunk)
+    #     except Exception as e:
+    #         chunk_queue.put(e)
+    #     finally:
+    #         chunk_queue.put(None)  # Sentinel value indicating the stream is finished
 
     # Start the stream worker in a background daemon thread
-    threading.Thread(target=stream_worker, daemon=True).start()
+    threading.Thread(target=stream_worker, args=(llm, messages, chunk_queue) ,daemon=True).start()
 
-    # --- Creative Thinking Themes ---
-    # Cooking / Chef Theme (as requested)
 
-    thinking_phrases_options = [
-        [
-            "🛒 Gathering fresh ingredients",
-            "🔪 Chopping up the context",
-            "🌡️ Preheating the language model",
-            "🥣 Mixing the concepts together",
-            "🍲 Simmering the thoughts",
-            "🍳 Cooking up a perfect reply",
-            "🍽️ Plating the final response",
-        ],
-        [
-            "📡 Establishing uplink",
-            "💾 Downloading subroutines",
-            "⚡ Overclocking cores",
-            "🧠 Synthesizing synapses",
-        ],
-        [
-            "🔮 Gazing into crystal ball",
-            "📜 Reading ancient scrolls",
-            "🧪 Brewing cognitive potion",
-            "✨ Channeling mana",
-        ],
-    ]
-
-    thinking_phrases = random.choice(thinking_phrases_options)
+    # thinking_phrases = random.choice(thinking_phrases_options)
+    thinking_phrases = select_thinking_phrase()
 
     phrase_index = 0
     dot_count = 1
@@ -121,14 +86,49 @@ def stream_response_gui(llm, messages, placeholder):
                     last_phrase_update = now
                     dot_count = 1  # Reset dots when text changes
 
-                # Construct the animated string
-                current_phrase = thinking_phrases[phrase_index]
-                dots = "." * dot_count
 
-                # Render the stylized status to the user
-                placeholder.markdown(f"*{current_phrase}{dots}*")
+                display_thinking_animation(placeholder, thinking_phrases, phrase_index, dot_count)
 
     # Final render without the cursor element
     placeholder.markdown(full_response)
 
     return full_response
+
+
+
+
+def select_thinking_phrase():
+
+     # --- Creative Thinking Themes ---
+    thinking_phrases_options = [
+        [
+            "🛒 Gathering fresh ingredients",
+            "🔪 Chopping up the context",
+            "🌡️ Preheating the language model",
+            "🥣 Mixing the concepts together",
+            "🍲 Simmering the thoughts",
+            "🍳 Cooking up a perfect reply",
+            "🍽️ Plating the final response",
+        ],
+        [
+            "📡 Establishing uplink",
+            "💾 Downloading subroutines",
+            "⚡ Overclocking cores",
+            "🧠 Synthesizing synapses",
+        ],
+        [
+            "🔮 Gazing into crystal ball",
+            "📜 Reading ancient scrolls",
+            "🧪 Brewing cognitive potion",
+            "✨ Channeling mana",
+        ],
+    ]
+
+    return random.choice(thinking_phrases_options)
+
+    
+
+def display_thinking_animation(placeholder, thinking_phrases, phrase_index, dot_count):
+    current_phrase = thinking_phrases[phrase_index]
+    dots = "." * dot_count
+    placeholder.markdown(f"*{current_phrase}{dots}*")
