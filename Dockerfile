@@ -1,17 +1,24 @@
-# Python runtime
 FROM python:3.14-slim
 
-# Working directory in the container
+# Create non-root user
+RUN useradd -m -s /bin/bash appuser
+
+# Set working directory
 WORKDIR /app
 
-# Copy the requirements file and install dependencies
+# Install dependencies first (better layer caching)
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy applicaiton code
-COPY . /app
+# Copy application code
+COPY . .
 
-# Expose port for GUI
+# Change ownership to non-root user
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user (security best practice)
+USER appuser
+
 EXPOSE 8501
 
-CMD ["streamlit", "run", "GUI.py", "--server.port=8501", "--server.address= "]
+CMD ["streamlit", "run", "GUI.py", "--server.port=8501", "--server.address=0.0.0.0"]
