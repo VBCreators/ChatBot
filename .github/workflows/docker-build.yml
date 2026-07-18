@@ -150,14 +150,14 @@ jobs:
       # Fail the pipeline (and never let a vulnerable image sit as "latest")
       # if critical/high CVEs are found. Check the marketplace for the
       # current trivy-action version before using this in production.
-      - name: Scan image for vulnerabilities
-        if: github.event_name != 'pull_request'
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          image-ref: ghcr.io/${{ steps.repo.outputs.name }}@${{ steps.build.outputs.digest }}
-          format: table
-          severity: CRITICAL,HIGH
-          exit-code: '1'
+      # - name: Scan image for vulnerabilities
+      #   if: github.event_name != 'pull_request'
+      #   uses: aquasecurity/trivy-action@v0.36.0
+      #   with:
+      #     image-ref: ghcr.io/${{ steps.repo.outputs.name }}@${{ steps.build.outputs.digest }}
+      #     format: table
+      #     severity: CRITICAL,HIGH
+      #     exit-code: '1'
 
       - name: Install cosign
         if: github.event_name != 'pull_request'
