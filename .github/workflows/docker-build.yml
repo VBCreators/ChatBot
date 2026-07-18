@@ -15,22 +15,25 @@
 # 5. persist-credentials: false on checkout — the default leaves a git credential on the runner filesystem for the rest of the job; disabling it removes an unnecessary attack surface.
 #
 #
-# 6. docker/metadata-action instead of hardcoded tags — auto-lowercases image refs (fixes your casing bug), and gives you semver tags when you push a v*.*.* git tag, not just latest/sha. Shipping only latest in production is a common anti-pattern — you lose the ability to pin or roll back reliably.
+# 6. docker/metadata-action instead of hardcoded tags — auto-lowercases image refs, and gives you semver tags when you push a v*.*.* git tag, not just latest/sha. Shipping only latest in production is a common anti-pattern — you lose the ability to pin or roll back reliably.
 #
 #
-# 7. BuildKit cache (cache-from/cache-to: type=gha) — reuses layers across runs via the Actions cache, meaningfully cutting build time on unchanged layers.
+# 7. Lowercase repository name computed once (steps.repo.outputs.name) — GHCR image refs must be all-lowercase. github.repository preserves the literal case ("VBCreators/ChatBot"), which metadata-action silently lowercases for you when building tags, but any step that manually interpolates github.repository (Trivy, cosign) will fail to parse the reference. Computing it once and reusing it everywhere avoids this class of bug entirely.
 #
 #
-# 8. SBOM + provenance (sbom: true, provenance: true) — generates a software bill of materials and SLSA provenance attestation attached to the image. Increasingly required for supply-chain compliance (e.g. SLSA, NIST SSDF).
+# 8. BuildKit cache (cache-from/cache-to: type=gha) — reuses layers across runs via the Actions cache, meaningfully cutting build time on unchanged layers.
 #
 #
-# 9. Vulnerability scanning (Trivy) — fails the build if critical/high CVEs are found in the built image, before it's trusted as "latest."
+# 9. SBOM + provenance (sbom: true, provenance: true) — generates a software bill of materials and SLSA provenance attestation attached to the image. Increasingly required for supply-chain compliance (e.g. SLSA, NIST SSDF).
 #
 #
-# 10. Image signing (cosign, keyless via OIDC) — lets anyone verify the image was built by this pipeline and hasn't been tampered with, without you managing a private signing key.
+# 10. Vulnerability scanning (Trivy) — fails the build if critical/high CVEs are found in the built image, before it's trusted as "latest."
 #
 #
-# 11. timeout-minutes: 20 — prevents a hung step from consuming runner minutes indefinitely.
+# 11. Image signing (cosign, keyless via OIDC) — lets anyone verify the image was built by this pipeline and hasn't been tampered with, without you managing a private signing key.
+#
+#
+# 12. timeout-minutes: 20 — prevents a hung step from consuming runner minutes indefinitely.
 
 
 
@@ -91,14 +94,20 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
+      # GHCR/OCI refs must be all-lowercase. github.repository is
+      # "VBCreators/ChatBot" (mixed case), which fails to parse when
+      # used directly in Trivy/cosign. Compute it once, reuse everywhere.
+      - name: Set lowercase repository name
+        id: repo
+        run: echo "name=${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
       # Generates tags/labels dynamically instead of hardcoding them.
-      # Also auto-lowercases image names, which fixes the VBCreators/ChatBot casing bug.
       - name: Extract metadata (tags, labels)
         id: meta
         uses: docker/metadata-action@v6
         with:
           images: |
-            ghcr.io/${{ github.repository }}
+            ghcr.io/${{ steps.repo.outputs.name }}
             docker.io/vbcreators/vb-ai-chatbot
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
@@ -145,7 +154,7 @@ jobs:
         if: github.event_name != 'pull_request'
         uses: aquasecurity/trivy-action@v0.36.0
         with:
-          image-ref: ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}
+          image-ref: ghcr.io/${{ steps.repo.outputs.name }}@${{ steps.build.outputs.digest }}
           format: table
           severity: CRITICAL,HIGH
           exit-code: '1'
@@ -159,5 +168,5 @@ jobs:
       - name: Sign images
         if: github.event_name != 'pull_request'
         run: |
-          cosign sign --yes "ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}"
+          cosign sign --yes "ghcr.io/${{ steps.repo.outputs.name }}@${{ steps.build.outputs.digest }}"
           cosign sign --yes "docker.io/vbcreators/vb-ai-chatbot@${{ steps.build.outputs.digest }}"
