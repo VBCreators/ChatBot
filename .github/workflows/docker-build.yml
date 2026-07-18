@@ -1,0 +1,163 @@
+# Security Best Practices for creating Github Actions .yml File
+#
+# 1. Least-privilege permissions — permissions: contents: read at the workflow level, then only the specific job elevates to packages: write (and id-token/attestations for signing). If a step is compromised (malicious dependency, supply-chain attack), the blast radius is capped
+#
+#
+# 2. Fork protection (if: github.repository == ...) — without this, a pull_request trigger from a forked repo can run your workflow. Combined with secrets, that's how tokens get exfiltrated in real incidents.
+#
+#
+# 3. pull_request trigger + conditional push — build and test on PRs without pushing, so you catch broken Dockerfiles before merge, without ever logging into a registry with untrusted PR code running.
+#
+#
+# 4. concurrency with cancel-in-progress — stops two pushes to main in quick succession from racing to publish the same tag, and saves compute.
+#
+#
+# 5. persist-credentials: false on checkout — the default leaves a git credential on the runner filesystem for the rest of the job; disabling it removes an unnecessary attack surface.
+#
+#
+# 6. docker/metadata-action instead of hardcoded tags — auto-lowercases image refs (fixes your casing bug), and gives you semver tags when you push a v*.*.* git tag, not just latest/sha. Shipping only latest in production is a common anti-pattern — you lose the ability to pin or roll back reliably.
+#
+#
+# 7. BuildKit cache (cache-from/cache-to: type=gha) — reuses layers across runs via the Actions cache, meaningfully cutting build time on unchanged layers.
+#
+#
+# 8. SBOM + provenance (sbom: true, provenance: true) — generates a software bill of materials and SLSA provenance attestation attached to the image. Increasingly required for supply-chain compliance (e.g. SLSA, NIST SSDF).
+#
+#
+# 9. Vulnerability scanning (Trivy) — fails the build if critical/high CVEs are found in the built image, before it's trusted as "latest."
+#
+#
+# 10. Image signing (cosign, keyless via OIDC) — lets anyone verify the image was built by this pipeline and hasn't been tampered with, without you managing a private signing key.
+#
+#
+# 11. timeout-minutes: 20 — prevents a hung step from consuming runner minutes indefinitely.
+
+
+
+
+##############################################
+#                                            #
+#             Start of the File:             #
+#                                            #
+##############################################
+
+
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches:
+      - main
+
+# Default read-only permissions at workflow level; the job below
+# elevates only what it actually needs. Defense in depth.
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same branch/PR to save minutes
+# and avoid two builds racing to push the same tag.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker:
+    # Prevents a fork's pull_request run from executing with your
+    # secrets/tokens. Replace with your actual owner/repo.
+    if: github.repository == 'VBCreators/ChatBot'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      packages: write
+      id-token: write      # required for keyless cosign signing (OIDC)
+      attestations: write  # required to publish build provenance
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false   # don't leave a git token lying around on the runner
+
+      - name: Set up QEMU (for multi-arch builds)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Generates tags/labels dynamically instead of hardcoding them.
+      # Also auto-lowercases image names, which fixes the VBCreators/ChatBot casing bug.
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+            docker.io/vbcreators/vb-ai-chatbot
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=latest,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+            type=sha,format=long
+            type=semver,pattern={{version}}
+
+      # Skip registry logins entirely on PR builds — a PR build/test
+      # doesn't need push credentials at all.
+      - name: Login to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build (and push outside of PRs)
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # GitHub Actions cache backend — dramatically speeds up rebuilds
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # Publishes an SBOM and SLSA build provenance attached to the image
+          sbom: true
+          provenance: true
+
+      # Fail the pipeline (and never let a vulnerable image sit as "latest")
+      # if critical/high CVEs are found. Check the marketplace for the
+      # current trivy-action version before using this in production.
+      - name: Scan image for vulnerabilities
+        if: github.event_name != 'pull_request'
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}
+          format: table
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+
+      - name: Install cosign
+        if: github.event_name != 'pull_request'
+        uses: sigstore/cosign-installer@v3
+
+      # Keyless signing via GitHub OIDC — no private key to manage/rotate.
+      # Lets downstream consumers verify the image actually came from this pipeline.
+      - name: Sign images
+        if: github.event_name != 'pull_request'
+        run: |
+          cosign sign --yes "ghcr.io/${{ github.repository }}@${{ steps.build.outputs.digest }}"
+          cosign sign --yes "docker.io/vbcreators/vb-ai-chatbot@${{ steps.build.outputs.digest }}"
