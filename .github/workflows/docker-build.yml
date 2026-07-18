@@ -152,7 +152,7 @@ jobs:
 
       - name: Install cosign
         if: github.event_name != 'pull_request'
-        uses: sigstore/cosign-installer@v4
+        uses: sigstore/cosign-installer@v4.1.0
 
       # Keyless signing via GitHub OIDC — no private key to manage/rotate.
       # Lets downstream consumers verify the image actually came from this pipeline.
