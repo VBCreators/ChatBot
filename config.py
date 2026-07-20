@@ -21,7 +21,7 @@ TEMPERATURE = 0.5
 STREAMING = True
 
 # Bot personality and response style settings
-BOT_NAME = "Tina"
+BOT_NAME = "Mina"
 COMPANY_NAME = "VB Creators"  # The name of the company or creator behind the bot, which can be used in the bot's introduction and personality description.
 SCOPE = "Personal Finance"  # The specific domain your bot specializes in (e.g., Personal Finance, Healthcare, Customer Support)
 REPLY_SIZE_LIMIT = 300  # Max words in a response
